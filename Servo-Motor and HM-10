@@ -1,0 +1,263 @@
+// control servo motor with Bluetooth
+
+/*
+  Software serial multiple serial test
+
+ Receives from the hardware serial, sends to software serial.
+ Receives from software serial, sends to hardware serial.
+
+ The circuit:
+ * RX is digital pin 10 (connect to TX of other device)
+ * TX is digital pin 11 (connect to RX of other device)
+
+ Note:
+ Not all pins on the Mega and Mega 2560 support change interrupts,
+ so only the following can be used for RX:
+ 10, 11, 12, 13, 50, 51, 52, 53, 62, 63, 64, 65, 66, 67, 68, 69
+
+ Not all pins on the Leonardo and Micro support change interrupts,
+ so only the following can be used for RX:
+ 8, 9, 10, 11, 14 (MISO), 15 (SCK), 16 (MOSI).
+
+ created back in the mists of time
+ modified 25 May 2012
+ by Tom Igoe
+ based on Mikal Hart's example
+
+ This example code is in the public domain.
+
+ */
+// #include <SoftwareSerial.h>
+
+// SoftwareSerial mySerial(10, 11); // RX, TX
+
+// void setup() {
+//   // Open serial communications and wait for port to open:
+//   Serial.begin(115200);
+//   while (!Serial) {
+//     ; // wait for serial port to connect. Needed for native USB port only
+//   }
+
+
+//   Serial.println("Goodnight moon!");
+
+//   // set the data rate for the SoftwareSerial port
+//   mySerial.begin(9600);
+//   delay(1000); // Wait 1 second for initialization
+//   mySerial.println("Hello, world?");
+// }
+
+// void loop() { // run over and over
+//   if (mySerial.available()) {
+//     Serial.write(mySerial.read());
+//   }
+//   if (Serial.available()) {
+//     mySerial.write(Serial.read());
+//   }
+// }
+
+// #include <SoftwareSerial.h>
+// #include <Servo.h>
+
+// // SoftwareSerial for Bluetooth communication (change pins if needed)
+// SoftwareSerial mySerial(10, 11); // RX, TX
+
+// // Create a Servo object to control a servo motor
+// Servo myServo;
+
+// void setup() {
+//   // Begin serial communication for monitoring
+//   Serial.begin(115200);
+//   while (!Serial) {
+//     ; // wait for serial port to connect. Needed for native USB port only
+//   }
+
+//   // Initialize software serial for the HM-10 Bluetooth module
+//   mySerial.begin(9600);
+
+//   // Attach the servo motor to pin 9
+//   myServo.attach(9);
+
+//   // Initialize servo to the 0-degree position
+//   myServo.write(0);
+//   Serial.println("Servo is set to 0 degrees.");
+// }
+
+// void loop() {
+//   // Check if there is data available from the Bluetooth module
+//   if (mySerial.available()) {
+//     // Read the incoming data (angle or command) from Bluetooth
+//     String input = mySerial.readStringUntil('\n'); // Read the data until newline character
+//     Serial.print(input);
+//     Serial.print('\n');
+
+//     // Try to convert the input string to an integer (angle value)
+//     int angle = input.toInt();
+
+//     // Check if the angle is within the valid servo range (0 to 180 degrees)
+//     if (angle >= 0 && angle <= 180) {
+//       myServo.write(angle); // Set the servo to the received angle
+//       // Serial.print("Servo moved to ");
+//       // Serial.print(angle);
+//       // Serial.println(" degrees.");
+//     } else {
+//       // If the input is not valid, print a message
+//       Serial.println("Invalid input received.");
+//     }
+//   }
+
+//   // Optionally, check if there is data from the Serial Monitor for testing
+//   if (Serial.available()) {
+//     // Forward data from the Serial Monitor to the Bluetooth module
+//     mySerial.write(Serial.read());
+//   }
+// }
+
+// #include <SoftwareSerial.h>
+// #include <Servo.h>
+
+// // SoftwareSerial for Bluetooth communication (change pins if needed)
+// SoftwareSerial mySerial(10, 11); // RX, TX
+
+// // Create a Servo object to control a servo motor
+// Servo myServo;
+
+// void setup() {
+//   // Begin serial communication for monitoring
+//   Serial.begin(115200);
+//   while (!Serial) {
+//     ; // wait for serial port to connect. Needed for native USB port only
+//   }
+
+//   // Initialize software serial for the HM-10 Bluetooth module
+//   mySerial.begin(9600);
+
+//   // Attach the servo motor to pin 9
+//   myServo.attach(9);
+
+//   // Initialize servo to the 0-degree position
+//   myServo.write(0);
+//   Serial.println("Servo is set to 0 degrees.");
+// }
+
+// void loop() {
+//   // Check if there is data available from the Bluetooth module
+//   if (mySerial.available()) {
+//     // Read the incoming data (angle or command) from Bluetooth
+//     String input = mySerial.readStringUntil('\n'); // Read the data until newline character
+//     Serial.print("Raw Input: ");
+//     Serial.println(input); // Print raw input for debugging
+
+//     // Parse the input to extract the angle value
+//     int angle = extractAngle(input); // Call the helper function to get angle
+
+//     // Check if the angle is within the valid servo range (0 to 180 degrees)
+//     if (angle >= 0 && angle <= 180) {
+//       myServo.write(angle); // Set the servo to the received angle
+//       Serial.print("Servo moved to ");
+//       Serial.print(angle);
+//       Serial.println(" degrees.");
+//     } else {
+//       // If the input is not valid, print a message
+//       Serial.println("Invalid input received.");
+//     }
+//   }
+
+//   // Optionally, check if there is data from the Serial Monitor for testing
+//   if (Serial.available()) {
+//     // Forward data from the Serial Monitor to the Bluetooth module
+//     mySerial.write(Serial.read());
+//   }
+// }
+
+// // Helper function to extract angle from the input string
+// int extractAngle(String input) {
+//   // Look for the number part in the string. This assumes the angle is after "J0:" and before the comma
+//   int index = input.indexOf(':');  // Find the colon separator
+//   if (index != -1) {
+//     String angleString = input.substring(index + 1, input.indexOf(',')); // Extract the number before the comma
+//     return angleString.toInt();  // Convert to integer
+//   }
+//   return -1;  // Return -1 if the format is not recognized
+// }
+
+#include <SoftwareSerial.h>
+#include <Servo.h>
+
+// SoftwareSerial for Bluetooth communication (change pins if needed)
+SoftwareSerial mySerial(10, 11); // RX, TX
+
+// Create a Servo object to control a servo motor
+Servo myServo;
+
+int angle = 90; // Start at 90 degrees (middle position)
+int increment = 5; // Amount of angle change per step
+
+void setup() {
+  // Begin serial communication for monitoring
+  Serial.begin(115200);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+  // Initialize software serial for the HM-10 Bluetooth module
+  mySerial.begin(9600);
+
+  // Attach the servo motor to pin 9
+  myServo.attach(9);
+
+  // Initialize servo to the middle (90-degree) position
+  myServo.write(angle);
+  Serial.println("Servo initialized at 90 degrees.");
+}
+
+void loop() {
+  // Check if there is data available from the Bluetooth module
+  if (mySerial.available()) {
+    // Read the incoming data (either J0 or J1)
+    String input = mySerial.readStringUntil('\n'); // Read until newline
+    Serial.print("Input: ");
+    Serial.println(input); // Print the input for debugging
+
+    // Check if input is J0 or J1
+    if (input.startsWith("J0")) {
+      rotateRight(); // Call the function to rotate right (clockwise)
+    } else if (input.startsWith("J1")) {
+      rotateLeft(); // Call the function to rotate left (counterclockwise)
+    } else {
+      Serial.println("Invalid input received.");
+    }
+  }
+
+  // Optionally, check if there is data from the Serial Monitor for testing
+  if (Serial.available()) {
+    // Forward data from the Serial Monitor to the Bluetooth module
+    mySerial.write(Serial.read());
+  }
+}
+
+// Function to rotate servo to the right (clockwise)
+void rotateRight() {
+  angle += increment; // Increase angle
+  if (angle > 180) { // Keep angle within bounds (0-180)
+    angle = 0; // Wrap around to 0 degrees
+  }
+  myServo.write(angle); // Move the servo
+  Serial.print("Servo rotated right to ");
+  Serial.print(angle);
+  Serial.println(" degrees.");
+  delay(50); // Adjust delay to control speed of rotation
+}
+
+// Function to rotate servo to the left (counterclockwise)
+void rotateLeft() {
+  angle -= increment; // Decrease angle
+  if (angle < 0) { // Keep angle within bounds (0-180)
+    angle = 180; // Wrap around to 180 degrees
+  }
+  myServo.write(angle); // Move the servo
+  Serial.print("Servo rotated left to ");
+  Serial.print(angle);
+  Serial.println(" degrees.");
+  delay(50); // Adjust delay to control speed of rotation
+}
