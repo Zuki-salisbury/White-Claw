@@ -1,0 +1,106 @@
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
+#include <SoftwareSerial.h>
+
+// Initialize the PCA9685 driver
+Adafruit_PWMServoDriver pca9685 = Adafruit_PWMServoDriver();
+
+// Bluetooth on pins 10 (RX) and 11 (TX)
+SoftwareSerial BTSerial(10, 11);   // RX | TX for HM-10
+
+#define SERVOMIN  150  // Minimum pulse length count (adjust based on your servo)
+#define SERVOMAX  600  // Maximum pulse length count (adjust based on your servo)
+#define SERVO_FREQ 50  // Analog servos run at 50 Hz
+#define SERVOMID  ((SERVOMIN + SERVOMAX) / 2)  // Midpoint for 90-degree movement
+bool armsOpen = false; 
+
+
+// Variable to track the servo state
+bool isOpen = false;  // Initially closed
+
+void setup() {
+  // Initialize serial communication for Bluetooth and Serial Monitor
+  Serial.begin(9600);
+  BTSerial.begin(9600); // HM-10 default baud rate is 9600
+  Serial.println("PCA9685 Servo Test with Bluetooth");
+
+  // Initialize the PCA9685 chip
+  pca9685.begin();
+  pca9685.setPWMFreq(SERVO_FREQ);  // Set frequency to 50Hz
+
+  delay(10);
+}
+
+void loop() {
+  // Check if data is received from Bluetooth
+  if (BTSerial.available()) {
+    String received = BTSerial.readString();  // Read the full incoming string
+    received.trim(); // Trim any leading or trailing spaces or newline characters
+    Serial.print("Received: ");
+    Serial.println(received);
+
+    // If the "B0" command is received, toggle the servo position
+    if (received == "B1") {
+      toggleServo();  // Call the function to toggle the servo
+    }
+
+    // If the "B1" command is received, toggle both servos on channels 1 and 2
+    if (received == "B2") {
+      toggleDualServos();  // Call the function to toggle both arms
+    }
+  }
+}
+
+// Function to toggle the servo between open and closed positions
+void toggleServo() {
+  if (isOpen) {
+    // If the servo is currently open, close it
+    closeServo();
+    isOpen = false;  // Update state to closed
+  } else {
+    // If the servo is currently closed, open it
+    openServo();
+    isOpen = true;   // Update state to open
+  }
+}
+
+// Function to open the servo (move from 0 to 180 degrees)
+void openServo() {
+  Serial.println("Opening servo");
+  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+    pca9685.setPWM(0, 0, pulselen);  // Channel 0 controls the servo
+    delay(10);
+  }
+  delay(1000);
+}
+
+// Function to close the servo (move from 180 to 0 degrees)
+void closeServo() {
+  Serial.println("Closing servo");
+  for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+    pca9685.setPWM(0, 0, pulselen);  // Channel 0 controls the servo
+    delay(10);
+  }
+  delay(1000);
+}
+
+// Function to move two servos simultaneously (channels 1 and 2)
+void toggleDualServos() {
+  Serial.println("Moving both arms (servos on channels 1 and 2)");
+  
+  // Move both servos from 0 degrees to 180 degrees
+  for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
+    pca9685.setPWM(1, 0, pulselen);  // Channel 1 controls the first arm
+    pca9685.setPWM(2, 0, pulselen);  // Channel 2 controls the second arm
+    delay(10);
+  }
+  delay(1000);
+
+  // Move both servos from 180 degrees back to 0 degrees
+  for (uint16_t pulselen = SERVOMAX; pulselen > SERVOMIN; pulselen--) {
+    pca9685.setPWM(1, 0, pulselen);  // Channel 1 controls the first arm
+    pca9685.setPWM(2, 0, pulselen);  // Channel 2 controls the second arm
+    delay(10);
+  }
+  delay(1000);
+}
