@@ -1,263 +1,191 @@
-// control servo motor with Bluetooth
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 
-/*
-  Software serial multiple serial test
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
- Receives from the hardware serial, sends to software serial.
- Receives from software serial, sends to hardware serial.
+// These values are adjusted for the MG996R
+int servoMin = 120; // Minimum pulse length count (0 degrees)
+int servoMax = 600; // Maximum pulse length count (180 degrees)
 
- The circuit:
- * RX is digital pin 10 (connect to TX of other device)
- * TX is digital pin 11 (connect to RX of other device)
+bool isElbowAtMax = true;
+bool isForearmAtMax = true;
+bool isWristAtMax = true;
+bool isclawAtMax = true;
+bool isShoulderFlipped = false;
 
- Note:
- Not all pins on the Mega and Mega 2560 support change interrupts,
- so only the following can be used for RX:
- 10, 11, 12, 13, 50, 51, 52, 53, 62, 63, 64, 65, 66, 67, 68, 69
+void setup()
+{
+  Serial.begin(9600);
+  pwm.begin();
+  R
+      pwm.setPWMFreq(50); // Set frequency to 50 Hz, suitable for MG996
 
- Not all pins on the Leonardo and Micro support change interrupts,
- so only the following can be used for RX:
- 8, 9, 10, 11, 14 (MISO), 15 (SCK), 16 (MOSI).
+  // Elbow Joint
+  pwm.setPWM(3, 0, servoMax);
 
- created back in the mists of time
- modified 25 May 2012
- by Tom Igoe
- based on Mikal Hart's example
+  // Forearm Joint
+  pwm.setPWM(2, 0, servoMax);
 
- This example code is in the public domain.
+  // Wrist Joint
+  pwm.setPWM(4, 0, servoMax);
 
- */
-// #include <SoftwareSerial.h>
+  // Claw Joint
+  pwm.setPWM(5, 0, servoMax);
 
-// SoftwareSerial mySerial(10, 11); // RX, TX
+  // Shoulder
+  // pwm.setPWM(0, 0, servoMax);
+  // pwm.setPWM(1, 0, servoMin);
 
-// void setup() {
-//   // Open serial communications and wait for port to open:
-//   Serial.begin(115200);
-//   while (!Serial) {
-//     ; // wait for serial port to connect. Needed for native USB port only
-//   }
-
-
-//   Serial.println("Goodnight moon!");
-
-//   // set the data rate for the SoftwareSerial port
-//   mySerial.begin(9600);
-//   delay(1000); // Wait 1 second for initialization
-//   mySerial.println("Hello, world?");
-// }
-
-// void loop() { // run over and over
-//   if (mySerial.available()) {
-//     Serial.write(mySerial.read());
-//   }
-//   if (Serial.available()) {
-//     mySerial.write(Serial.read());
-//   }
-// }
-
-// #include <SoftwareSerial.h>
-// #include <Servo.h>
-
-// // SoftwareSerial for Bluetooth communication (change pins if needed)
-// SoftwareSerial mySerial(10, 11); // RX, TX
-
-// // Create a Servo object to control a servo motor
-// Servo myServo;
-
-// void setup() {
-//   // Begin serial communication for monitoring
-//   Serial.begin(115200);
-//   while (!Serial) {
-//     ; // wait for serial port to connect. Needed for native USB port only
-//   }
-
-//   // Initialize software serial for the HM-10 Bluetooth module
-//   mySerial.begin(9600);
-
-//   // Attach the servo motor to pin 9
-//   myServo.attach(9);
-
-//   // Initialize servo to the 0-degree position
-//   myServo.write(0);
-//   Serial.println("Servo is set to 0 degrees.");
-// }
-
-// void loop() {
-//   // Check if there is data available from the Bluetooth module
-//   if (mySerial.available()) {
-//     // Read the incoming data (angle or command) from Bluetooth
-//     String input = mySerial.readStringUntil('\n'); // Read the data until newline character
-//     Serial.print(input);
-//     Serial.print('\n');
-
-//     // Try to convert the input string to an integer (angle value)
-//     int angle = input.toInt();
-
-//     // Check if the angle is within the valid servo range (0 to 180 degrees)
-//     if (angle >= 0 && angle <= 180) {
-//       myServo.write(angle); // Set the servo to the received angle
-//       // Serial.print("Servo moved to ");
-//       // Serial.print(angle);
-//       // Serial.println(" degrees.");
-//     } else {
-//       // If the input is not valid, print a message
-//       Serial.println("Invalid input received.");
-//     }
-//   }
-
-//   // Optionally, check if there is data from the Serial Monitor for testing
-//   if (Serial.available()) {
-//     // Forward data from the Serial Monitor to the Bluetooth module
-//     mySerial.write(Serial.read());
-//   }
-// }
-
-// #include <SoftwareSerial.h>
-// #include <Servo.h>
-
-// // SoftwareSerial for Bluetooth communication (change pins if needed)
-// SoftwareSerial mySerial(10, 11); // RX, TX
-
-// // Create a Servo object to control a servo motor
-// Servo myServo;
-
-// void setup() {
-//   // Begin serial communication for monitoring
-//   Serial.begin(115200);
-//   while (!Serial) {
-//     ; // wait for serial port to connect. Needed for native USB port only
-//   }
-
-//   // Initialize software serial for the HM-10 Bluetooth module
-//   mySerial.begin(9600);
-
-//   // Attach the servo motor to pin 9
-//   myServo.attach(9);
-
-//   // Initialize servo to the 0-degree position
-//   myServo.write(0);
-//   Serial.println("Servo is set to 0 degrees.");
-// }
-
-// void loop() {
-//   // Check if there is data available from the Bluetooth module
-//   if (mySerial.available()) {
-//     // Read the incoming data (angle or command) from Bluetooth
-//     String input = mySerial.readStringUntil('\n'); // Read the data until newline character
-//     Serial.print("Raw Input: ");
-//     Serial.println(input); // Print raw input for debugging
-
-//     // Parse the input to extract the angle value
-//     int angle = extractAngle(input); // Call the helper function to get angle
-
-//     // Check if the angle is within the valid servo range (0 to 180 degrees)
-//     if (angle >= 0 && angle <= 180) {
-//       myServo.write(angle); // Set the servo to the received angle
-//       Serial.print("Servo moved to ");
-//       Serial.print(angle);
-//       Serial.println(" degrees.");
-//     } else {
-//       // If the input is not valid, print a message
-//       Serial.println("Invalid input received.");
-//     }
-//   }
-
-//   // Optionally, check if there is data from the Serial Monitor for testing
-//   if (Serial.available()) {
-//     // Forward data from the Serial Monitor to the Bluetooth module
-//     mySerial.write(Serial.read());
-//   }
-// }
-
-// // Helper function to extract angle from the input string
-// int extractAngle(String input) {
-//   // Look for the number part in the string. This assumes the angle is after "J0:" and before the comma
-//   int index = input.indexOf(':');  // Find the colon separator
-//   if (index != -1) {
-//     String angleString = input.substring(index + 1, input.indexOf(',')); // Extract the number before the comma
-//     return angleString.toInt();  // Convert to integer
-//   }
-//   return -1;  // Return -1 if the format is not recognized
-// }
-
-#include <SoftwareSerial.h>
-#include <Servo.h>
-
-// SoftwareSerial for Bluetooth communication (change pins if needed)
-SoftwareSerial mySerial(10, 11); // RX, TX
-
-// Create a Servo object to control a servo motor
-Servo myServo;
-
-int angle = 90; // Start at 90 degrees (middle position)
-int increment = 5; // Amount of angle change per step
-
-void setup() {
-  // Begin serial communication for monitoring
-  Serial.begin(115200);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-
-  // Initialize software serial for the HM-10 Bluetooth module
-  mySerial.begin(9600);
-
-  // Attach the servo motor to pin 9
-  myServo.attach(9);
-
-  // Initialize servo to the middle (90-degree) position
-  myServo.write(angle);
-  Serial.println("Servo initialized at 90 degrees.");
+  Serial.println("Type '1' to toggle the elbow joint position between min and max.");
+  Serial.println("Type '2' to toggle the forearm joint position between min and max.");
+  Serial.println("Type '3' to toggle the wrist joint position between min and max.");
+  Serial.println("Type '4' to toggle the claw joint position between min and max.");
+  Serial.println("Type '5' to toggle the shoulder joint positions.");
 }
 
-void loop() {
-  // Check if there is data available from the Bluetooth module
-  if (mySerial.available()) {
-    // Read the incoming data (either J0 or J1)
-    String input = mySerial.readStringUntil('\n'); // Read until newline
-    Serial.print("Input: ");
-    Serial.println(input); // Print the input for debugging
+void loop()
+{
+  // Move forearm based off input through seriel monitor
+  //  Check if data is available in the Serial Monitor
+  if (Serial.available() > 0)
+  {
+    // Read the input as a single character
+    char input = Serial.read();
 
-    // Check if input is J0 or J1
-    if (input.startsWith("J0")) {
-      rotateRight(); // Call the function to rotate right (clockwise)
-    } else if (input.startsWith("J1")) {
-      rotateLeft(); // Call the function to rotate left (counterclockwise)
-    } else {
-      Serial.println("Invalid input received.");
+    // If the input is '1', toggle the elbow joint position
+    if (input == '1')
+    {
+      if (isElbowAtMax)
+      {
+        pwm.setPWM(3, 0, servoMin); // Move elbow joint to min position
+        Serial.println("Elbow joint moved to min position.");
+      }
+      else
+      {
+        pwm.setPWM(3, 0, servoMax); // Move elbow joint to max position
+        Serial.println("Elbow joint moved to max position.");
+      }
+
+      // Toggle the position flag
+      isElbowAtMax = !isElbowAtMax;
+    }
+    // If the input is '2', toggle the Forearm joint position
+    if (input == '2')
+    {
+      if (isForearmAtMax)
+      {
+        pwm.setPWM(2, 0, servoMin); // Move Forearm joint to min position
+        Serial.println("Forearm joint moved to min position.");
+      }
+      else
+      {
+        pwm.setPWM(2, 0, servoMax); // Move Forearm joint to max position
+        Serial.println("Forearm joint moved to max position.");
+      }
+
+      // Toggle the position flag
+      isForearmAtMax = !isForearmAtMax;
+    }
+    // If the input is '3', toggle the Wrist joint position
+    if (input == '3')
+    {
+      if (isWristAtMax)
+      {
+        pwm.setPWM(4, 0, servoMin); // Move Wrist joint to min position
+        Serial.println("Wrist joint moved to min position.");
+      }
+      else
+      {
+        pwm.setPWM(4, 0, servoMax); // Move Wrist joint to max position
+        Serial.println("Wrist joint moved to max position.");
+      }
+
+      // Toggle the position flag
+      isWristAtMax = !isWristAtMax;
+    }
+
+    // If the input is '4', toggle the claw joint position
+    if (input == '4')
+    {
+      if (isclawAtMax)
+      {
+        pwm.setPWM(5, 0, servoMin); // Move claw joint to min position
+        Serial.println("Claw joint moved to min position.");
+      }
+      else
+      {
+        pwm.setPWM(5, 0, servoMax); // Move claw joint to max position
+        Serial.println("Claw joint moved to max position.");
+      }
+
+      // Toggle the position flag
+      isclawAtMax = !isclawAtMax;
+    }
+
+    // Toggle shoulder joint positions when '5' is pressed
+    if (input == '5')
+    {
+      if (isShoulderFlipped)
+      {
+        pwm.setPWM(0, 0, servoMin); // Move port 1 to max
+        pwm.setPWM(1, 0, servoMax); // Move port 2 to min
+        Serial.println("Shoulder joint set: Port 1 at max, Port 2 at min.");
+      }
+      else
+      {
+        pwm.setPWM(0, 0, servoMax); // Move port 1 to min
+        pwm.setPWM(1, 0, servoMin); // Move port 2 to max
+        Serial.println("Shoulder joint set: Port 1 at min, Port 2 at max.");
+      }
+
+      // Toggle the shoulder position flag
+      isShoulderFlipped = !isShoulderFlipped;
     }
   }
 
-  // Optionally, check if there is data from the Serial Monitor for testing
-  if (Serial.available()) {
-    // Forward data from the Serial Monitor to the Bluetooth module
-    mySerial.write(Serial.read());
-  }
-}
+  // Turn motor on port 0 to 0 degrees
+  // pwm.setPWM(0, 0, servoMin);
+  // Turn motor on port 1 to 0 degrees
+  // delay(1000);
 
-// Function to rotate servo to the right (clockwise)
-void rotateRight() {
-  angle += increment; // Increase angle
-  if (angle > 180) { // Keep angle within bounds (0-180)
-    angle = 0; // Wrap around to 0 degrees
-  }
-  myServo.write(angle); // Move the servo
-  Serial.print("Servo rotated right to ");
-  Serial.print(angle);
-  Serial.println(" degrees.");
-  delay(50); // Adjust delay to control speed of rotation
-}
+  // pwm.setPWM(1, 0, servoMax);
 
-// Function to rotate servo to the left (counterclockwise)
-void rotateLeft() {
-  angle -= increment; // Decrease angle
-  if (angle < 0) { // Keep angle within bounds (0-180)
-    angle = 180; // Wrap around to 180 degrees
-  }
-  myServo.write(angle); // Move the servo
-  Serial.print("Servo rotated left to ");
-  Serial.print(angle);
-  Serial.println(" degrees.");
-  delay(50); // Adjust delay to control speed of rotation
+  // delay(1000);  // Wait for 1 second
+
+  // forearm joint
+  // wm.setPWM(2, 0, servoMax);
+
+  // delay(1000);
+
+  // Elbow joint
+  // pwm.setPWM(3, 0, servoMax);
+
+  // delay(1000);  // Wait for 1 second
+
+  // forearm joint
+  // pwm.setPWM(2, 0, servoMin);
+
+  // delay(1000);  // Wait for 1 second
+
+  // Elbow joint
+  // pwm.setPWM(3, 0, servoMin);
+
+  // delay(1000);
+
+  // Turn motor on port 0 to 180 degrees
+  // pwm.setPWM(0, 0, servoMax);
+
+  // delay(1000);
+  //  Turn motor on port 1 to 180 degrees
+  // pwm.setPWM(1, 0, servoMin);
+
+  // delay(1000);  // Wait for 1 second
+
+  // pwm.setPWM(2, 0, servoMin);
+
+  // delay(1000);
+
+  // pwm.setPWM(3, 0, servoMin);
+
+  // delay(1000);  // Wait for 1 second
 }
