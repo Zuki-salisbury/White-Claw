@@ -1,171 +1,117 @@
-#include <Wire.h>
+include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
-
+#include <SoftwareSerial.h>
+// Constants
+SoftwareSerial mySerial(7, 8); // RX, TX
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
+const int SERVO_FREQ = 50;
+const int SHOULDER_MIN = 179; // Minimum position for Shoulder 1
+const int SHOULDER_MAX = 487; // Maximum position for Shoulder 1
 
-// These values are adjusted for the MG996R
-int servoMin = 120; // Minimum pulse length count (0 degrees)
-int servoMax = 600; // Maximum pulse length count (180 degrees)
-
-bool isElbowAtMax = true;
-bool isForearmAtMax = true;
-bool isWristAtMax = true;
-bool isclawAtMax = true;
-bool isShoulderFlipped = false; 
-
+// Degree mappings
+int degrees[] = {103, 128, 154, 179, 205, 231, 256, 282, 308, 333, 359, 384, 410, 436, 461, 487, 513, 538, 564};
+// Joint positions
+int shoulderPos[2], elbowPos, forearmPos, wristPos, clawPos;
+// Function prototypes
+void initializeServos();
+void moveJoint(int &currentPos, int step, int channel, const char *jointName);
+void moveShoulder(int step);
+void handleInput(char input);
+void sayHello();
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  while (!Serial) {}
+  mySerial.begin(9600);
   pwm.begin();
-  pwm.setPWMFreq(50);  // Set frequency to 50 Hz, suitable for MG996R
-
-  //Elbow Joint
-  pwm.setPWM(3, 0, servoMax);
-
-  //Forearm Joint
-  pwm.setPWM(2, 0, servoMax);
-
-  //Wrist Joint
-  pwm.setPWM(4, 0, servoMax);
-
-  //Claw Joint
-  pwm.setPWM(5, 0, servoMax);
-
-  //Shoulder
-  //pwm.setPWM(0, 0, servoMax);
-  //pwm.setPWM(1, 0, servoMin);
-
-  Serial.println("Type '1' to toggle the elbow joint position between min and max.");
-  Serial.println("Type '2' to toggle the forearm joint position between min and max.");
-  Serial.println("Type '3' to toggle the wrist joint position between min and max.");
-  Serial.println("Type '4' to toggle the claw joint position between min and max.");
-  Serial.println("Type '5' to toggle the shoulder joint positions.");
-  
+  pwm.setPWMFreq(SERVO_FREQ);
+  initializeServos();
 }
-
 void loop() {
-  //Move forearm based off input through seriel monitor
-  // Check if data is available in the Serial Monitor
-  if (Serial.available() > 0) {
-    // Read the input as a single character
-    char input = Serial.read();
-
-    // If the input is '1', toggle the elbow joint position
-    if (input == '1') {
-      if (isElbowAtMax) {
-        pwm.setPWM(3, 0, servoMin);  // Move elbow joint to min position
-        Serial.println("Elbow joint moved to min position.");
-      } else {
-        pwm.setPWM(3, 0, servoMax);  // Move elbow joint to max position
-        Serial.println("Elbow joint moved to max position.");
-      }
-
-      // Toggle the position flag
-      isElbowAtMax = !isElbowAtMax;
+  if (mySerial.available()) {
+    char input = mySerial.read();
+    if (input != '\n' && input != '\r') {
+      handleInput(input);
     }
-    // If the input is '2', toggle the Forearm joint position
-    if (input == '2') {
-      if (isForearmAtMax) {
-        pwm.setPWM(2, 0, servoMin);  // Move Forearm joint to min position
-        Serial.println("Forearm joint moved to min position.");
-      } else {
-        pwm.setPWM(2, 0, servoMax);  // Move Forearm joint to max position
-        Serial.println("Forearm joint moved to max position.");
-      }
-
-      // Toggle the position flag
-      isForearmAtMax = !isForearmAtMax;
-    }
-    // If the input is '3', toggle the Wrist joint position
-    if (input == '3') {
-      if (isWristAtMax) {
-        pwm.setPWM(4, 0, servoMin);  // Move Wrist joint to min position
-        Serial.println("Wrist joint moved to min position.");
-      } else {
-        pwm.setPWM(4, 0, servoMax);  // Move Wrist joint to max position
-        Serial.println("Wrist joint moved to max position.");
-      }
-
-      // Toggle the position flag
-      isWristAtMax = !isWristAtMax;
-    }
-
-    // If the input is '4', toggle the claw joint position
-    if (input == '4') {
-      if (isclawAtMax) {
-        pwm.setPWM(5, 0, servoMin);  // Move claw joint to min position
-        Serial.println("Claw joint moved to min position.");
-      } else {
-        pwm.setPWM(5, 0, servoMax);  // Move claw joint to max position
-        Serial.println("Claw joint moved to max position.");
-      }
-
-      // Toggle the position flag
-      isclawAtMax = !isclawAtMax;
-    }
-
-    /*
-
-    // Toggle shoulder joint positions when '5' is pressed
-    if (input == '5') {
-      if (isShoulderFlipped) {
-        pwm.setPWM(0, 0, servoMin); // Move port 1 to max
-        pwm.setPWM(1, 0, servoMax); // Move port 2 to min
-        Serial.println("Shoulder joint set: Port 1 at max, Port 2 at min.");
-      } else {
-        pwm.setPWM(0, 0, servoMax); // Move port 1 to min
-        pwm.setPWM(1, 0, servoMin); // Move port 2 to max
-        Serial.println("Shoulder joint set: Port 1 at min, Port 2 at max.");
-      }
-      
-      // Toggle the shoulder position flag
-      isShoulderFlipped = !isShoulderFlipped;
-    }
-    */
   }
-
-  // Turn motor on port 0 to 0 degrees
-  //pwm.setPWM(0, 0, servoMin);
-  // Turn motor on port 1 to 0 degrees
-  //delay(1000);
-
-  //pwm.setPWM(1, 0, servoMax);
-
-  //delay(1000);  // Wait for 1 second
-
-  // forearm joint
-  //wm.setPWM(2, 0, servoMax);
-
-  //delay(1000);
-
-  // Elbow joint
-  //pwm.setPWM(3, 0, servoMax);
-
-  //delay(1000);  // Wait for 1 second
-
-  // forearm joint
-  //pwm.setPWM(2, 0, servoMin);
-
-  //delay(1000);  // Wait for 1 second
-
-  // Elbow joint
-  //pwm.setPWM(3, 0, servoMin);
-
-  //delay(1000);
-  
-  // Turn motor on port 0 to 180 degrees
-  //pwm.setPWM(0, 0, servoMax);
-
-  //delay(1000);
-  // Turn motor on port 1 to 180 degrees
-  //pwm.setPWM(1, 0, servoMin);
-
-  //delay(1000);  // Wait for 1 second
-
-  //pwm.setPWM(2, 0, servoMin);
-
-  //delay(1000); 
-
-  //pwm.setPWM(3, 0, servoMin);
-
-  //delay(1000);  // Wait for 1 second
+}
+void initializeServos() {
+  // Initialize servos to default positions
+  shoulderPos[0] = 487; // Degrees 0
+  shoulderPos[1] = 179;
+  elbowPos = wristPos = clawPos = degrees[6]; // Degrees 0
+  forearmPos = degrees[15];
+  pwm.setPWM(0, 0, shoulderPos[0]);
+  pwm.setPWM(1, 0, shoulderPos[1]);
+  pwm.setPWM(2, 0, elbowPos);
+  pwm.setPWM(3, 0, forearmPos);
+  pwm.setPWM(4, 0, wristPos);
+  pwm.setPWM(5, 0, clawPos);
+}
+void moveJoint(int &currentPos, int step, int channel, const char *jointName) {
+  int currentIndex = -1;
+  for (int i = 0; i < sizeof(degrees) / sizeof(degrees[0]); i++) {
+    if (degrees[i] == currentPos) {
+      currentIndex = i;
+      break;
+    }
+  }
+  int newIndex = currentIndex + step;
+  if (newIndex >= 0 && newIndex < sizeof(degrees) / sizeof(degrees[0])) {
+    int newPosition = degrees[newIndex];
+    // Check limits for Shoulder 1 and Shoulder 2
+    if ((channel == 0 && (newPosition == SHOULDER_MIN || newPosition == SHOULDER_MAX)) || 
+        (channel == 1 && (newPosition == SHOULDER_MIN || newPosition == SHOULDER_MAX))) {
+      Serial.print(jointName);
+      Serial.println(" Movement out of bounds (limit reached)");
+      return;
+    }
+    if ((channel == 2 && (newPosition >= 256))) {
+      Serial.print(jointName);
+      Serial.println(" Movement out of bounds (limit reached)");
+      return;
+    }
+    // Update position and move the servo
+    currentPos = newPosition;
+    pwm.setPWM(channel, 0, currentPos);
+    Serial.print(jointName);
+    Serial.print(" Position1: ");
+    Serial.println(currentPos);
+  } else {
+    Serial.print(jointName);
+    Serial.println(" Movement out of bounds (invalid index)");
+  }
+}
+void moveShoulder(int step) {
+  moveJoint(shoulderPos[0], step, 0, "Shoulder 1");
+  moveJoint(shoulderPos[1], -step, 1, "Shoulder 2");
+}
+void handleInput(char input) {
+  switch (input) {
+    case '0': moveShoulder(-1); break; // Move shoulder Up
+    case '1': moveShoulder(1); break;  // Move shoulder Down
+    case '2': moveJoint(elbowPos, 1, 2, "Elbow\n"); break;  // Move elbow Up
+    case '3': moveJoint(elbowPos, -1, 2, "Elbow\n"); break; // Move elbow Down
+    case '4': moveJoint(forearmPos, 1, 3, "Forearm\n"); break; // Move forearm Down
+    case '5': moveJoint(forearmPos, -1, 3, "Forearm\n"); break; // Move forearm Up
+    case '6': moveJoint(wristPos, 1, 4, "Wrist\n"); break;    // Move wrist Right
+    case '7': moveJoint(wristPos, -1, 4, "Wrist\n"); break;   // Move wrist Left
+    case '8': moveJoint(clawPos, 1, 5, "Claw\n"); break;     // Open claw
+    case '9': moveJoint(clawPos, -1, 5, "Claw\n"); break;    // Close claw
+    case 'h': sayHello(); break;
+    case 's': initializeServos(); break;
+    default: Serial.println("-"); return;
+  }
+}
+void sayHello() {
+  for (int i = 0; i < 3; i++) {
+    Serial.println("Saying Hello!");
+    // Move to degrees[10] (high position)
+    forearmPos = degrees[12];
+    pwm.setPWM(3, 0, forearmPos);
+    delay(500); // Pause for 500ms
+    // Move to degrees[3] (low position)
+    forearmPos = degrees[6];
+    pwm.setPWM(3, 0, forearmPos);
+    delay(500); // Pause for 500ms
+  }
 }
